@@ -1,0 +1,135 @@
+
+         Homework 3: Scalar Optimizations using Data-flow Analysis
+
+Course:     CS 380C: Advanced Compiler Techniques (Spring 2013)
+Instructor: Keshav Pingali
+Assigned:   Tuesday, February 19, 2013
+Due:        Thursday, February 28, 2013, 11:59 PM
+
+
+
+
+
+2. Objective
+------------
+The goal of this assignment is to perform several scalar
+optimizations. You will build this on top of the work you did for homework
+1. This assignment has the following components:
+  1. Construct the Control Flow Graph (CFG).
+  2. Perform liveness analysis.
+  3. Use the liveness information to perform dead-code elimination.
+
+
+2.1. Construct the Control Flow Graph (CFG)
+-------------------------------------------
+Before performing iterative data-flow analysis, you will need to generate
+the CFG. The nodes of the CFG are the basic blocks. The basic blocks in
+turn consist of a sequence of instructions in 3-address format.
+
+To make evaluating your code easier, you have to write a script 'cfg.sh'
+that will print the information about the CFG. It should write out the
+details of each basic block as well as the edges between the basic blocks.
+This is the output generated for gcd.c (without the BEGIN and END lines):
+
+BEGIN
+Function: 2
+Basic blocks: 2 8 10 19
+CFG:
+2 -> 8
+8 -> 10 19
+10 -> 8
+19 ->
+Function: 24
+Basic blocks: 24
+CFG:
+24 ->
+END
+
+The output should be self-explanatory. The numbers are the instruction numbers
+that start the functions and basic blocks. The list of basic blocks and CFG
+successors should be sorted numerically.
+
+For all programs in the examples directory, the CFGs expressed in the above
+format are given along with the source program. Before turning in your
+assignment, you should check whether your output matches these files.
+
+2.2. Perform liveness analysis
+------------------------------
+For this part of the assignment, you need to perform liveness analysis
+and identify dead variables (variables whose values will not be used later
+in the program). You can use a simple iterative algorithm, or a more
+efficient work-list based algorithm for your dataflow analysis. The
+execution time of the algorithm is not a criterion. Whether your analysis
+converges and computes the right information is what matters.
+
+2.3. Perform dead code elimination
+----------------------------------
+Now that you have identified dead variables and dead instructions, remove
+these instructions from the CFG. Removing dead instructions will lead to
+move dead variables, and your code should remove them as well.
+
+
+3. Output
+---------
+Your compiler should accept 3-address code as input from stdin, and write
+output to stdout. Your compiler should implement the following backends
+  1. C (this was homework 1)
+  2. CFG (this is section 2.1 of this homework)
+  3. 3-address code (a backend that writes output back in 3 address format)
+Your compiler should implement the following optimizations
+  1. Dead code elimination
+Your compiler invoked by the script 'run.sh' should accept the following
+command line arguments.
+  1. -opt, a comma separated list of optimizations. The optimization to
+    support is dce.
+  2. -backend, the backend to be used to write output to. The optimizations
+     to support are c, cfg and 3addr.
+Here are some usage scenarios.
+  1. ./run.sh -backend=c # This was assignment 1
+  2. ./run.sh -backend=cfg # This is section 2.1 of this homework
+  3. ./run.sh -opt=dce -backend=c # Perform dead-code elimination and produce C code as output.
+  4. ./run.sh -opt=dce,scp -backend=cfg # Perform dead-code elimination  
+   and write out the cfg (after these optimizations)
+
+4. Turning in your assignment
+-----------------------------
+ The examples directory has some
+additional output files and scripts to check section 2.1 of this
+assignment.
+
+Your assignment should contain the following:
+  1. A single tar.gz file named hw3.tar.gz, which, when extracted, creates
+     directory hw3.
+  2. The hw3 directory can contain sub-directories.
+  3. The hw3 directory should contain the following files:
+     a. README - Please include your name and UTEID here.
+     b. Synthetic test programs:
+        i. example-deadcode.c - A synthetic program to test the dead code
+                                elimination phase.
+     c. compile.sh - a script to compile your source code.
+     d. run.sh - a script that runs your compiler. This script should read
+        3-address code as input from stdin and write output to stdout. The
+        output is specified by the command line arguments described in
+        section 3.
+The hw3 directory already exists with these files in the tarball you
+downloaded.
+
+Turn in your assignment by running the following commands on a UTCS Linux
+machine.
+   $ # Go the parent directory of the hw3 directory.
+   $ tar -zcvf hw3.tar.gz hw3
+   $ turnin --submit olivo cs380c-hw3 hw3.tar.gz
+   $ turnin --list olivo cs380c-hw3
+Please get a UTCS linux account as soon as possible. Please use turnin to
+submit your assignment. Only homeworks that are turned in using the
+procedure described above will be accepted.
+
+5. Hints
+--------
+0. Start early :)
+1. You may find it easier to implement a generic dataflow analysis
+framework, and plug deadcode elimination into
+this framework.
+2. The output files were generated by your TA. Please start early and
+compare your output with the TA's output. If you suspect these files to be
+incorrect, please send your TA a note. 
