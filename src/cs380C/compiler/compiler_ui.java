@@ -1,5 +1,6 @@
 package cs380C.compiler;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.*;
@@ -27,24 +28,23 @@ public class compiler_ui {
 	public static void main(String[] args) throws Exception {
 		try {			
 			// Parse CommandLine Arguments
-			//final Scanner r = new Scanner(new File(args[0]));
-			final Scanner r = new Scanner(System.in);
+			final Scanner r = new Scanner(new File(args[0]));
+			//final Scanner r = new Scanner(System.in);
 			final Writer w = new PrintWriter(System.out);
 			
 			output = read(r);
 			
 			for (String s: args) {
-				String arg = s.split("=")[1];
 	            if(s.startsWith("-backend="))
 	            {
-	            	outputType = backend.valueOf(arg);
+	            	outputType = backend.valueOf(s.split("=")[1].toUpperCase());
 	            }
 	            else if(s.startsWith("-opt="))
 	            {
-	            	String[] opts = arg.split(",");
+	            	String[] opts = s.split("=")[1].split(",");
 	            	for(String o : opts)
 	            	{
-	            		optimizations.add(opt.valueOf(o));
+	            		optimizations.add(opt.valueOf(o.toUpperCase()));
 	            	}
 	            }
 	        }
@@ -66,11 +66,12 @@ public class compiler_ui {
 				w.write(cscTranslator.translator(toString(output)));
 			break;
 			case CFG:
-				// TODO: Implement Control Flow Graph
+				w.write(CFG.translator(output));
 			break;
 			default:
 				throw new Exception("Unrecognized Output Type");
 		}
+		w.flush();
 	}
 
 	private static Scanner toString(LinkedList<String> output) {
