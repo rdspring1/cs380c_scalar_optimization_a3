@@ -1,11 +1,14 @@
+package cs380C.compiler;
+
 import java.util.*;
-import java.io.*;
 
 public class cscTranslator
 {
-	private static float numline = 1;
-	private static HashMap<Float, Integer> function = new HashMap<Float, Integer>(); // functionNumber : LineNumber
-	private static TreeMap<Integer, String> globals = new TreeMap<Integer, String>(); // GP Offset : Global Name
+	// Class Variables
+	// functionNumber : LineNumber
+	private static HashMap<Float, Integer> function = new HashMap<Float, Integer>(); 
+	// GP Offset : Global Name
+	private static TreeMap<Integer, String> globals = new TreeMap<Integer, String>();
 	// Struct Name : List of Struct Elements
 	private static HashMap<String, TreeMap<Integer,String>> gstruct = new HashMap<String, TreeMap<Integer,String>>();
 	// Struct Name : Size of Struct
@@ -14,19 +17,8 @@ public class cscTranslator
 	private static final int FP = 0;
 	private static final int GP = 32768;
 	private static int STRUCTCOUNT = 0;
+	private static float numline = 1;
 
-	public static void main(String[] args) throws Exception {
-		try {
-			// Create file 
-			//final Scanner r = new Scanner(new File(args[0]));
-			final Scanner r = new Scanner(System.in);
-			final Writer w = new PrintWriter(System.out);
-			w.write(translator(r));
-			w.flush();
-		} catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
-		}
-	}
 	public static String translator(Scanner r) throws Exception 
 	{
 		try 

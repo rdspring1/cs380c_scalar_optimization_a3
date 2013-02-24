@@ -73,7 +73,7 @@ move dead variables, and your code should remove them as well.
 ---------
 Your compiler should accept 3-address code as input from stdin, and write
 output to stdout. Your compiler should implement the following backends
-  1. C (this was homework 1)
+  1. C (this was homework 2)
   2. CFG (this is section 2.1 of this homework)
   3. 3-address code (a backend that writes output back in 3 address format)
 Your compiler should implement the following optimizations
@@ -85,10 +85,10 @@ command line arguments.
   2. -backend, the backend to be used to write output to. The optimizations
      to support are c, cfg and 3addr.
 Here are some usage scenarios.
-  1. ./run.sh -backend=c # This was assignment 1
+  1. ./run.sh -backend=c # This was assignment 2
   2. ./run.sh -backend=cfg # This is section 2.1 of this homework
   3. ./run.sh -opt=dce -backend=c # Perform dead-code elimination and produce C code as output.
-  4. ./run.sh -opt=dce,scp -backend=cfg # Perform dead-code elimination  
+  4. ./run.sh -opt=dce -backend=cfg # Perform dead-code elimination  
    and write out the cfg (after these optimizations)
 
 4. Turning in your assignment
