@@ -4,7 +4,7 @@ import java.util.*;
 
 public class CFG 
 {
-	private static String[] arrayOutput;
+	private static String[] arrayCmdlist;
 	private static LinkedList<String> cmdlist = new LinkedList<String>();
 	private static LinkedList<Integer> functions = new LinkedList<Integer>();
 	private static LinkedHashMap<Integer, SortedSet<Integer>> nodes = new LinkedHashMap<Integer, SortedSet<Integer>>();
@@ -13,11 +13,11 @@ public class CFG
 	public CFG(LinkedList<String> input)
 	{
 		cmdlist = input;
-		arrayOutput = input.toArray(new String[cmdlist.size()]);
-		
+		arrayCmdlist = input.toArray(new String[cmdlist.size()]);
+		edges.put(-1, new TreeSet<Integer>());
 		generateCFG();
+		edges.remove(-1);
 	}
-	
 	public String toString()
 	{	
 		StringBuilder str = new StringBuilder();
@@ -61,12 +61,12 @@ public class CFG
 				
 				if(nodes.get(currentFunction).contains(numline))
 				{
-					edges.get(getprevBlock(currentFunction, numline)).add(numline);
+					edges.get(getPrevBlock(currentFunction, numline)).add(numline);
 				}
 				
-				if(edges.get(getprevBlock(currentFunction, getprevBlock(currentFunction, numline))).size() == 0)
+				if(edges.get(getPrevBlock(currentFunction, getPrevBlock(currentFunction, numline))).size() == 0)
 				{
-						edges.get(getprevBlock(currentFunction, getprevBlock(currentFunction, numline))).add(getprevBlock(currentFunction, numline));
+						edges.get(getPrevBlock(currentFunction, getPrevBlock(currentFunction, numline))).add(getPrevBlock(currentFunction, numline));
 				}
 				
 				nodes.get(currentFunction).add(numline + 1);
@@ -75,26 +75,40 @@ public class CFG
 				if(!nodes.get(currentFunction).contains(jmpline))
 				{
 					nodes.get(currentFunction).add(jmpline);
-					edges.put(jmpline, new TreeSet<Integer>());
-					edges.get(getprevBlock(currentFunction, numline + 1)).add(jmpline);
+					if(arrayCmdlist[jmpline - 2].split(":")[1].trim().split("\\s")[0].equals("enter"))
+					{
+						edges.put(jmpline, new TreeSet<Integer>(edges.get(jmpline - 1)));
+						edges.put(jmpline - 1, new TreeSet<Integer>());
+						edges.get(jmpline - 1).add(jmpline);
+					}
+					else
+					{
+						edges.put(jmpline, new TreeSet<Integer>());
+						edges.get(getPrevBlock(currentFunction, numline + 1)).add(jmpline);
+					}
+					edges.get(getPrevBlock(currentFunction, numline + 1)).add(jmpline);
 				}
 				else
-				{
-					edges.get(getprevBlock(currentFunction, numline + 1)).add(jmpline);
+				{						
+					edges.get(getPrevBlock(currentFunction, numline + 1)).add(jmpline);
 				}
 			}
 			else if(cmd[0].equals("call"))
 			{
 				nodes.get(currentFunction).add(numline + 1);
 				edges.put(numline + 1, new TreeSet<Integer>());
-				edges.get(getprevBlock(currentFunction, numline)).add(numline + 1);
+				edges.get(getPrevBlock(currentFunction, numline)).add(numline + 1);
 			}
 			else if(cmd[0].equals("blbc") || cmd[0].equals("blbs"))
 			{
 				int startline = startCondition(numline - 1);
 				int endline = numline + 1;
 				int jmpline = Integer.valueOf(cmd[2].substring(1, cmd[2].length() - 1));
-				nodes.get(currentFunction).add(startline);
+				
+				if(arrayCmdlist[startline - 2].split(":")[1].trim().split("\\s")[0].equals("enter"))
+					--startline;
+				else
+					nodes.get(currentFunction).add(startline);
 				
 				if(!edges.containsKey(startline))
 					edges.put(startline, new TreeSet<Integer>());
@@ -110,20 +124,29 @@ public class CFG
 				if(!edges.containsKey(jmpline))
 					edges.put(jmpline, new TreeSet<Integer>());
 				
-				if(edges.get(getprevBlock(currentFunction, startline)).size() == 0)
-					edges.get(getprevBlock(currentFunction, startline)).add(startline);
+				if(edges.get(getPrevBlock(currentFunction, startline)).size() == 0)
+					edges.get(getPrevBlock(currentFunction, startline)).add(startline);
+			}
+			else if(cmd[0].equals("ret"))
+			{
+				if(nodes.get(currentFunction).contains(numline) && edges.get(getPrevBlock(currentFunction, numline)).size() == 0)
+					edges.get(getPrevBlock(currentFunction, numline)).add(numline);
 			}
 			++numline;
 		}
 	}
-	private int getprevBlock(int currentFunction, int numline) 
+	private int getPrevBlock(int currentFunction, int numline) 
 	{
-		return nodes.get(currentFunction).headSet(numline).last();
+		SortedSet<Integer> prevSet = nodes.get(currentFunction).headSet(numline);
+		if(prevSet.size() > 0)
+			return prevSet.last();
+		else
+			return -1;
 	}
 	private int startCondition(int numline) 
 	{
-		String[] cmd = arrayOutput[numline].split(":")[1].trim().split("\\s");
-		if(!arrayOutput[numline].contains("(") && !arrayOutput[numline].contains(")"))
+		String[] cmd = arrayCmdlist[numline].split(":")[1].trim().split("\\s");
+		if(!arrayCmdlist[numline].contains("(") && !arrayCmdlist[numline].contains(")"))
 		{
 			return numline + 1;
 		}
