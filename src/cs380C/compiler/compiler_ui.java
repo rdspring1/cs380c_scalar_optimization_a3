@@ -66,7 +66,7 @@ public class compiler_ui {
 				w.write(cscTranslator.translator(toString(output)));
 			break;
 			case CFG:
-				w.write(CFG.translator(output));
+				w.write(new CFG(output).toString());
 			break;
 			default:
 				throw new Exception("Unrecognized Output Type");

@@ -10,14 +10,17 @@ public class CFG
 	private static LinkedHashMap<Integer, SortedSet<Integer>> nodes = new LinkedHashMap<Integer, SortedSet<Integer>>();
 	private static HashMap<Integer, SortedSet<Integer>> edges = new HashMap<Integer, SortedSet<Integer>>();
 	
-	public static String translator(LinkedList<String> input)
+	public CFG(LinkedList<String> input)
 	{
-		StringBuilder str = new StringBuilder();
 		cmdlist = input;
 		arrayOutput = input.toArray(new String[cmdlist.size()]);
 		
 		generateCFG();
-		
+	}
+	
+	public String toString()
+	{	
+		StringBuilder str = new StringBuilder();
 		for(Integer id : functions)
 		{
 			str.append("Function: " + id.toString() + "\n");
@@ -35,7 +38,7 @@ public class CFG
 		}
 		return str.toString();
 	}
-	private static void generateCFG() 
+	private void generateCFG() 
 	{
 		int numline = 1;
 		int currentFunction = -1;
@@ -113,11 +116,11 @@ public class CFG
 			++numline;
 		}
 	}
-	private static int getprevBlock(int currentFunction, int numline) 
+	private int getprevBlock(int currentFunction, int numline) 
 	{
 		return nodes.get(currentFunction).headSet(numline).last();
 	}
-	private static int startCondition(int numline) 
+	private int startCondition(int numline) 
 	{
 		String[] cmd = arrayOutput[numline].split(":")[1].trim().split("\\s");
 		if(!arrayOutput[numline].contains("(") && !arrayOutput[numline].contains(")"))
@@ -151,7 +154,7 @@ public class CFG
 		
 		return -1;
 	}
-	private static int lineRef(String line) 
+	private int lineRef(String line) 
 	{
 		if(!line.contains("(") && !line.contains(")"))
 			return -1;
