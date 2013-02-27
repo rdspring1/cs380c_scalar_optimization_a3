@@ -1,5 +1,7 @@
 package cs380C.compiler;
 
+
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -28,8 +30,8 @@ public class compiler_ui {
 	public static void main(String[] args) throws Exception {
 		try {			
 			// Parse CommandLine Arguments
-			//final Scanner r = new Scanner(new File(args[0]));
-			final Scanner r = new Scanner(System.in);
+			final Scanner r = new Scanner(new File(args[0]));
+			//final Scanner r = new Scanner(System.in);
 			final Writer w = new PrintWriter(System.out);
 			
 			output = read(r);

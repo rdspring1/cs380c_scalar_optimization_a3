@@ -2,13 +2,13 @@ package cs380C.compiler;
 
 import java.util.*;
 
-public class CFG 
+public class CFG
 {
-	private static String[] arrayCmdlist;
-	private static LinkedList<String> cmdlist = new LinkedList<String>();
-	private static LinkedList<Integer> functions = new LinkedList<Integer>();
-	private static LinkedHashMap<Integer, SortedSet<Integer>> nodes = new LinkedHashMap<Integer, SortedSet<Integer>>();
-	private static HashMap<Integer, SortedSet<Integer>> edges = new HashMap<Integer, SortedSet<Integer>>();
+	private String[] arrayCmdlist;
+	private LinkedList<String> cmdlist = new LinkedList<String>();
+	private LinkedList<Integer> functions = new LinkedList<Integer>();
+	private LinkedHashMap<Integer, SortedSet<Integer>> nodes = new LinkedHashMap<Integer, SortedSet<Integer>>();
+	private HashMap<Integer, SortedSet<Integer>> edges = new HashMap<Integer, SortedSet<Integer>>();
 	
 	public CFG(LinkedList<String> input)
 	{
@@ -135,11 +135,19 @@ public class CFG
 			++numline;
 		}
 	}
-	private int getPrevBlock(int currentFunction, int numline) 
+	public int getPrevBlock(int currentFunction, int numline) 
 	{
 		SortedSet<Integer> prevSet = nodes.get(currentFunction).headSet(numline);
 		if(prevSet.size() > 0)
 			return prevSet.last();
+		else
+			return -1;
+	}
+	public int getNextBlock(int currentFunction, int numline) 
+	{
+		SortedSet<Integer> nextSet = nodes.get(currentFunction).tailSet(numline);
+		if(nextSet.size() > 0)
+			return nextSet.first();
 		else
 			return -1;
 	}
@@ -184,4 +192,16 @@ public class CFG
 		
 		return Integer.valueOf(line.substring(1, line.length() - 1)) - 1;
 	}
+	public SortedSet<Integer> getNodes(int function)
+	{
+		return nodes.get(function);
+	}
+	public SortedSet<Integer> getEdges(int node)
+	{
+		return edges.get(node);
+	}
+	public Iterator<Integer> getIterator() {
+		return functions.iterator();
+	}
+
 }
