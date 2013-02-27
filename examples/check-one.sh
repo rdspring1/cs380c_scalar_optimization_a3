@@ -3,7 +3,7 @@
 
 
 C_SUBSET_COMPILER=../src/csc
-THREE_ADDR_TO_C_TRANSLATOR=../3addr-to-c-converter/convert.py
+THREE_ADDR_TO_C_TRANSLATOR=../hw3/compiler.jar
 
 [ $# -ne 1 ] && { echo "Usage $0 PROGRAM" >&2; exit 1; }
 
