@@ -3,28 +3,27 @@ package cs380C.compiler;
 import java.util.*;
 
 public class LA {
-	private static String[] ignore = { "enter", "ret", "write", "wrl", "store", "param", "call", "br", "blbs", "blbc", "br", "entrypc"};
+	private static List<String> DEFCMD = Arrays.asList("store", "move");
 	
 	private LinkedList<String> cmdlist = new LinkedList<String>();
 	private CFG cfg;
 	
-	private boolean[] def;
-	private HashMap<Integer, Set<Integer>> use = new HashMap<Integer, Set<Integer>>();
+	private HashMap<Integer, String> def = new HashMap<Integer, String>();
+	private HashMap<Integer, Set<String>> use = new HashMap<Integer, Set<String>>();
 
-	private LinkedHashMap<Integer, Set<Integer>> instructLiveSet = new LinkedHashMap<Integer, Set<Integer>>();
-	private LinkedHashMap<Integer, Set<Integer>> in = new LinkedHashMap<Integer, Set<Integer>>();
-	private LinkedHashMap<Integer, Set<Integer>> out = new LinkedHashMap<Integer, Set<Integer>>();
+	private LinkedHashMap<Integer, Set<String>> instructLiveSet = new LinkedHashMap<Integer, Set<String>>();
+	private LinkedHashMap<Integer, Set<String>> in = new LinkedHashMap<Integer, Set<String>>();
+	private LinkedHashMap<Integer, Set<String>> out = new LinkedHashMap<Integer, Set<String>>();
 	
 	public LA(LinkedList<String> input, CFG cfg)
 	{
 		this.cmdlist = input;
 		this.cfg = cfg;
-		def = new boolean[cmdlist.size()];
 		generateDefUse();
 		setupBlocks();
 	}
 
-	public HashMap<Integer, Set<Integer>> liveAnalysis()
+	public HashMap<Integer, Set<String>> liveAnalysis()
 	{		
 		while(update());	
 		return out;
@@ -38,8 +37,8 @@ public class LA {
 			SortedSet<Integer> nodes = cfg.getNodes(func);
 			for(Integer block : nodes)
 			{
-				in.put(block, new TreeSet<Integer>());
-				out.put(block, new TreeSet<Integer>());
+				in.put(block, new TreeSet<String>());
+				out.put(block, new TreeSet<String>());
 			}
 		}
 	}
@@ -50,31 +49,52 @@ public class LA {
 		for(String line : cmdlist)
 		{
 			// Setup instructLiveSet
-			instructLiveSet.put(numline, new TreeSet<Integer>());
+			instructLiveSet.put(numline, new TreeSet<String>());
 			
+			Integer linenum = Integer.valueOf(numline);
 			String[] cmd = line.split(":")[1].trim().split("\\s");
 			
-			if(checkCmd(cmd[0]))
-				def[numline - 1] = true;
-			else
-				def[numline - 1] = false;
-			
-			for(int i = 1; i < cmd.length; ++i)
+			if(acceptCmd(cmd[0], DEFCMD))
 			{
-				if(cmd[i].contains("(") && cmd[i].contains(")"))
+				if(cmd[1].contains("#"))
 				{
-					Integer linenum = Integer.valueOf(numline);
-					if(!use.containsKey(linenum))
-						use.put(linenum, new TreeSet<Integer>());
-					use.get(linenum).add(Integer.valueOf(cmd[i].substring(1, cmd[i].length() - 1)));
+					use.put(linenum, new TreeSet<String>());
+					use.get(linenum).add(cmd[1].split("#")[0]);
+				}
+				
+				if(cmd[2].contains("#"))
+					def.put(linenum, cmd[2].split("#")[0]);
+			}
+			else
+			{
+				for(int i = 1; i < cmd.length; ++i)
+				{
+					String arg = cmd[i].split("#")[0];
+					if(cmd[i].contains("#") && !arg.contains("_base"))
+					{
+						if(!use.containsKey(linenum))
+							use.put(linenum, new TreeSet<String>());
+						use.get(linenum).add(arg);
+					}
 				}
 			}
+			
 			++numline;
 		}
 	}
 
-	private boolean checkCmd(String cmd) {
-		for(String i : ignore)
+	private boolean acceptCmd(String cmd, Iterable<String> iter) {
+		for(String i : iter)
+		{
+			if(cmd.equals(i))
+				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private boolean ignoreCmd(String cmd, Iterable<String> iter) {
+		for(String i : iter)
 		{
 			if(cmd.equals(i))
 				return false;
@@ -113,46 +133,45 @@ public class LA {
 	private boolean updateBlock(Integer function, Integer block) {
 		boolean update = false;
 		
-		// out[B] = U in[B-successors]
+		// out[B] = Union of in[B->Successors]
 		SortedSet<Integer> successors = cfg.getEdges(block);
-		Set<Integer> outblock = out.get(block);
 		for(Integer i : successors)
-		{
-			outblock.addAll(in.get(i));
-		}
-		out.put(block, outblock);
+			out.get(block).addAll(in.get(i));
 		
 		int startline = block;
-		int currentline = cfg.getNextBlock(function, block) - 1;
-		instructLiveSet.put(currentline, out.get(block));
-		--currentline;
+		int endline = cfg.getNextBlock(function, block) - 1;
 		
-		for(; currentline >= startline; --currentline)
+		if(endline < 0)
+			endline = cfg.getNextFunction(function) - 1;
+		
+		instructLiveSet.put(endline, out.get(block));
+		
+		if(startline != endline)
 		{
-			// out[currentline] = (out[currentline + 1] - def[currentline + 1]) U use[currentline + 1]
-			Set<Integer> newSet = instructLiveSet.get(currentline + 1);
-			
-			if(def[currentline + 1])
-				newSet.remove(currentline + 1);
-			
-			if(!use.get(currentline + 1).isEmpty())
-				newSet.addAll(use.get(currentline + 1));
-			
-			instructLiveSet.put(currentline, newSet);
+			for(int currentline = endline; currentline >= startline; --currentline)
+			{
+				// out[currentline - 1] = (out[currentline] - def[currentline]) U use[currentline]
+				Set<String> newSet = new TreeSet<String>(instructLiveSet.get(currentline));
+				
+				if(def.containsKey(currentline))
+					newSet.remove(def.get(currentline));
+				
+				if(use.containsKey(currentline))
+					newSet.addAll(use.get(currentline));
+				
+				if(currentline == startline)
+				{
+					if(!in.get(startline).equals(newSet))
+						update = true;
+					
+					in.put(startline, newSet);
+				}
+				else
+				{
+					instructLiveSet.put(currentline - 1, newSet);
+				}
+			}
 		}
-		
-		Set<Integer> newSet = instructLiveSet.get(currentline + 1);
-		
-		if(def[currentline + 1])
-			newSet.remove(currentline + 1);
-		
-		if(!use.get(currentline + 1).isEmpty())
-			newSet.addAll(use.get(currentline + 1));
-		
-		if(in.get(startline).equals(newSet))
-			update = true;
-		
-		in.put(startline, newSet);
 		
 		return update;
 	}

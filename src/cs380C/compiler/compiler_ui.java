@@ -20,7 +20,7 @@ public class compiler_ui {
 		CFG
 	}
 	
-	private static LinkedList<String> output = new LinkedList<String>();
+	private static LinkedList<String> cmdlist = new LinkedList<String>();
 	private static LinkedList<opt> optimizations = new LinkedList<opt>();
 	private static backend outputType;
 	
@@ -34,7 +34,7 @@ public class compiler_ui {
 			//final Scanner r = new Scanner(System.in);
 			final Writer w = new PrintWriter(System.out);
 			
-			output = read(r);
+			cmdlist = read(r);
 			
 			for (String s: args) {
 	            if(s.startsWith("-backend="))
@@ -52,7 +52,7 @@ public class compiler_ui {
 	        }
 			
 			for(opt o : optimizations)
-				performOptization(o);
+				performOptimization(o);
 			
 			generateOutput(w, outputType);
 			
@@ -65,10 +65,10 @@ public class compiler_ui {
 		switch(outputType)
 		{
 			case C:
-				w.write(cscTranslator.translator(toString(output)));
+				w.write(cscTranslator.translator(toString(cmdlist)));
 			break;
 			case CFG:
-				w.write(new CFG(output).toString());
+				w.write(new CFG(cmdlist).toString());
 			break;
 			default:
 				throw new Exception("Unrecognized Output Type");
@@ -86,11 +86,11 @@ public class compiler_ui {
 		return new Scanner(out.toString());
 	}
 
-	private static void performOptization(opt o) throws Exception {
+	private static void performOptimization(opt o) throws Exception {
 		switch(o)
 		{
 			case DCE:
-				// TODO: Implement Dead Code Elimination
+				cmdlist = DCE.instance().performOptimization(cmdlist);
 			break;
 			default:
 				throw new Exception("Unrecognized Optimization");

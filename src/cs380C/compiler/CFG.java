@@ -6,7 +6,7 @@ public class CFG
 {
 	private String[] arrayCmdlist;
 	private LinkedList<String> cmdlist = new LinkedList<String>();
-	private LinkedList<Integer> functions = new LinkedList<Integer>();
+	private SortedSet<Integer> functions = new TreeSet<Integer>();
 	private LinkedHashMap<Integer, SortedSet<Integer>> nodes = new LinkedHashMap<Integer, SortedSet<Integer>>();
 	private HashMap<Integer, SortedSet<Integer>> edges = new HashMap<Integer, SortedSet<Integer>>();
 	
@@ -135,21 +135,44 @@ public class CFG
 			++numline;
 		}
 	}
-	public int getPrevBlock(int currentFunction, int numline) 
+	public int getPrevBlock(int function, int numline) 
 	{
-		SortedSet<Integer> prevSet = nodes.get(currentFunction).headSet(numline);
+		SortedSet<Integer> prevSet = nodes.get(function).headSet(numline);
 		if(prevSet.size() > 0)
 			return prevSet.last();
 		else
 			return -1;
 	}
-	public int getNextBlock(int currentFunction, int numline) 
+	public int getNextBlock(int function, int numline) 
 	{
-		SortedSet<Integer> nextSet = nodes.get(currentFunction).tailSet(numline);
+		SortedSet<Integer> nextSet = nodes.get(function).tailSet(numline + 1);
 		if(nextSet.size() > 0)
 			return nextSet.first();
 		else
 			return -1;
+	}
+	public int getCurrentBlock(int function, int numline) {
+		SortedSet<Integer> nextSet = nodes.get(function).tailSet(numline);
+		if(nextSet.size() > 0)
+			return nextSet.first();
+		else
+			return -1;
+	}
+	public int getPrevFunction(int numline)
+	{
+		SortedSet<Integer> prevSet = functions.headSet(numline);
+		if(prevSet.size() > 0)
+			return prevSet.last();
+		else
+			return -1;
+	}
+	public int getNextFunction(int numline)
+	{
+		SortedSet<Integer> nextSet = functions.tailSet(numline + 1);
+		if(nextSet.size() > 0)
+			return nextSet.last();
+		else
+			return cmdlist.size();
 	}
 	private int startCondition(int numline) 
 	{
@@ -203,5 +226,4 @@ public class CFG
 	public Iterator<Integer> getIterator() {
 		return functions.iterator();
 	}
-
 }
