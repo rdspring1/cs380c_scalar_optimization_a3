@@ -58,8 +58,27 @@ public class DCE implements Optimization {
 	}
 
 	private String updateLine(String line) {
-		// TODO Update the line number and references in the line
-		return null;
+		// Update the line number and references in the line
+		int linenum  = Integer.getInteger(line.split(":")[0].trim().split("\\s")[1]);
+		String[] cmd = line.split(":")[1].trim().split("\\s");
+		for(int i = 1; i < cmd.length; ++i)
+		{
+			if(cmd[i].contains("(") && cmd[i].contains(")"))
+			{
+				int reference = Integer.valueOf(cmd[i].substring(1, cmd[i].length() - 1));
+				++reference;
+				cmd[i] = "(" + reference + ")"; 
+			}
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("	instr " + linenum + ": " + cmd[0]);
+		for(int i = 1; i < cmd.length; ++i)
+		{
+			sb.append(" " + cmd[i]);
+		}
+		sb.append("\n");
+		return sb.toString();
 	}
 
 	private boolean checkRemove(String[] cmd, Set<String> set) {
