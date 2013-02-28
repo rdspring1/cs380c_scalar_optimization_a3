@@ -30,7 +30,7 @@ public class LA {
 	}
 	
 	private void setupBlocks() {
-		Iterator<Integer> funcIter = cfg.getIterator();
+		Iterator<Integer> funcIter = cfg.iterator();
 		while(funcIter.hasNext())
 		{
 			Integer func = funcIter.next();
@@ -103,7 +103,7 @@ public class LA {
 
 	private boolean update() {
 		boolean update = false;
-		Iterator<Integer> funcIter = cfg.getIterator();
+		Iterator<Integer> funcIter = cfg.iterator();
 		
 		while(funcIter.hasNext())
 		{
@@ -145,30 +145,27 @@ public class LA {
 		
 		instructLiveSet.put(endline, out.get(block));
 		
-		if(startline != endline)
+		for(int currentline = endline; currentline >= startline; --currentline)
 		{
-			for(int currentline = endline; currentline >= startline; --currentline)
+			// out[currentline - 1] = (out[currentline] - def[currentline]) U use[currentline]
+			Set<String> newSet = new TreeSet<String>(instructLiveSet.get(currentline));
+			
+			if(def.containsKey(currentline))
+				newSet.remove(def.get(currentline));
+			
+			if(use.containsKey(currentline))
+				newSet.addAll(use.get(currentline));
+			
+			if(currentline == startline)
 			{
-				// out[currentline - 1] = (out[currentline] - def[currentline]) U use[currentline]
-				Set<String> newSet = new TreeSet<String>(instructLiveSet.get(currentline));
+				if(!in.get(startline).equals(newSet))
+					update = true;
 				
-				if(def.containsKey(currentline))
-					newSet.remove(def.get(currentline));
-				
-				if(use.containsKey(currentline))
-					newSet.addAll(use.get(currentline));
-				
-				if(currentline == startline)
-				{
-					if(!in.get(startline).equals(newSet))
-						update = true;
-					
-					in.put(startline, newSet);
-				}
-				else
-				{
-					instructLiveSet.put(currentline - 1, newSet);
-				}
+				in.put(startline, newSet);
+			}
+			else
+			{
+				instructLiveSet.put(currentline - 1, newSet);
 			}
 		}
 		

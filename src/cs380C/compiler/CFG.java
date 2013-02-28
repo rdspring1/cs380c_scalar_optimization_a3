@@ -2,7 +2,7 @@ package cs380C.compiler;
 
 import java.util.*;
 
-public class CFG
+public class CFG implements BaseCFG
 {
 	private String[] arrayCmdlist;
 	private LinkedList<String> cmdlist = new LinkedList<String>();
@@ -197,8 +197,30 @@ public class CFG
 	{
 		return edges.get(node);
 	}
-	public Iterator<Integer> getIterator() {
+	public Iterator<Integer> iterator() {
 		return functions.iterator();
+	}
+	public void updateCFG()
+	{
+		for(int function : functions)
+		{
+			int lastblock = nodes.get(function).last();
+			int endblock = getNextFunction(function) - 1;
+			
+			if(endblock < 0)
+				endblock = cmdlist.size();
+			
+			nodes.get(function).add(endblock);
+			edges.put(endblock, new TreeSet<Integer>());
+			
+			for(int i = endblock - 1; i > lastblock; --i)
+			{
+				nodes.get(function).add(i);
+				edges.put(i, new TreeSet<Integer>());
+				edges.get(i).add(i + 1);
+			}
+			edges.get(lastblock).add(lastblock + 1);
+		}
 	}
 	private int startCondition(int numline) 
 	{

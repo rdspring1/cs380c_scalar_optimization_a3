@@ -6,19 +6,23 @@
 
 void main()
 {
-    long a, b, c, d, x, output;
+    long a, b, c, d, x, y, output;
 
     a = 3; 
     b = 5;
     d = 4;
     x = 100; 
+
     if (a > b)
     {
 	c = a + b;
     	d = 2;
     }
 
-    c = 4;
+    y = 10;
+    y = 15;
+    y = 20;
+    c = y + 4;
     output = b * d + c;
     WriteLong(output);
     WriteLine();

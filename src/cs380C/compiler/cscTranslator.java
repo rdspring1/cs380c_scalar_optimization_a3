@@ -1,7 +1,5 @@
 package cs380C.compiler;
 
-
-
 import java.util.*;
 
 public class cscTranslator
@@ -15,6 +13,8 @@ public class cscTranslator
 	private static HashMap<String, TreeMap<Integer,String>> gstruct = new HashMap<String, TreeMap<Integer,String>>();
 	// Struct Name : Size of Struct
 	private static HashMap<String, Integer> gstructSize = new HashMap<String, Integer>();
+	// Global Arrays
+	private static LinkedList<String> garrays = new LinkedList<String>();
 	private static final int LONGSIZE = 8;
 	private static final int FP = 0;
 	private static final int GP = 32768;
@@ -35,7 +35,7 @@ public class cscTranslator
 			return "STOP\n";
 		}
 	}
-	public static String getProgram(Scanner r) throws Exception
+	private static String getProgram(Scanner r) throws Exception
 	{
 		StringBuilder body = new StringBuilder();
 		if(r.hasNextLine() && r.nextLine().contains("nop")) {
@@ -56,12 +56,12 @@ public class cscTranslator
 		pgm.append("#define long long long\n");
 		pgm.append("\n\n\n");
 		pgm.append("// Global Declarations\n");
-		pgm.append(getDeclarations(globals, gstruct, gstructSize, GP));
+		pgm.append(getDeclarations(globals, gstruct, gstructSize, garrays, GP));
 		pgm.append("\n//Functions\n");
 		pgm.append(body.toString());
 		return pgm.toString();
 	}
-	public static String getFunction(Scanner r) throws Exception
+	private static String getFunction(Scanner r) throws Exception
 	{
 		// Print Function
 		TreeMap<Integer, String> params = new TreeMap<Integer, String>();
@@ -69,6 +69,7 @@ public class cscTranslator
 		TreeMap<Float, String> cmds = new TreeMap<Float, String>();
 		HashMap<String,TreeMap<Integer,String>> lstruct = new HashMap<String,TreeMap<Integer,String>>();
 	    HashMap<String, Integer> lstructSize = new HashMap<String, Integer>();
+	    LinkedList<String> larrays = new LinkedList<String>();
 		int numparam = 0;
 		boolean isMain = false;
 		
@@ -215,6 +216,7 @@ public class cscTranslator
 					String arrayindex = arg2.substring(1, arg2.lastIndexOf("*") - 1);
 					
 					gstructSize.put(arrayname, Integer.parseInt(arg2.substring(1, arg2.length()).substring(arg2.lastIndexOf("*") + 1, arg2.length() - 2)) / LONGSIZE);
+					garrays.add(arrayname);
 					if(size != 1) // Multidimensional Array
 						cmds.put(numline, arrayname + "[(" + arrayindex + " * " + size + ")]");
 					else
@@ -230,6 +232,7 @@ public class cscTranslator
 					String arrayindex = arg2.substring(1, arg2.lastIndexOf("*") - 1);
 					
 					lstructSize.put(arrayname, size);
+					larrays.add(arrayname);
 					if(size != 1) // Multidimensional Array
 						cmds.put(numline, arrayname + "[(" + arrayindex + " * " + size + ")]");
 					else
@@ -409,7 +412,32 @@ public class cscTranslator
 				throw new Exception("Unknown 3addr command: " + original);
 			}
 		}
-		return printFunction(isMain, numparam, locals, params, lstruct, lstructSize, cmds);
+		return printFunction(isMain, numparam, locals, params, lstruct, lstructSize, larrays, cmds);
+	}
+	private static String getDeclarations(TreeMap<Integer, String> variables, HashMap<String, TreeMap<Integer,String>> structs, HashMap<String, Integer> structSize, LinkedList<String> arrays, int scope)
+	{
+		StringBuilder strdec = new StringBuilder();
+		Integer prev = scope;
+		
+		for(Integer offset : variables.descendingKeySet())
+		{			
+			int size = Math.abs((offset - prev) / 8);
+			if(structs.containsKey(variables.get(offset)))
+			{
+				strdec.append(getStructDeclaration(variables.get(offset), structs, structSize, size));
+			}
+			else if(size > 1 && arrays.contains(variables.get(offset))) // Array
+			{
+				strdec.append("\tlong " + variables.get(offset) + "[" + size + "];");
+			}
+			else // Variable
+			{
+				strdec.append("\tlong " + variables.get(offset) + ";");
+			}
+			strdec.append("\n");
+			prev = offset;
+		}
+		return strdec.toString();
 	}
 	private static String cleanArrayName(String arg1) {
 		String arrayindex = arg1.substring(arg1.indexOf("[") + 1, arg1.lastIndexOf("]"));
@@ -456,7 +484,7 @@ public class cscTranslator
 			return getStructName(arg1.substring(0, lb) + arg1.substring(rb + 1));
 		}
 	}
-	private static String printFunction(boolean isMain, int numparam, TreeMap<Integer, String> locals, TreeMap<Integer, String> params, HashMap<String,TreeMap<Integer,String>> lstruct, HashMap<String, Integer> lstructSize, TreeMap<Float, String> cmds) {
+	private static String printFunction(boolean isMain, int numparam, TreeMap<Integer, String> locals, TreeMap<Integer, String> params, HashMap<String,TreeMap<Integer,String>> lstruct, HashMap<String, Integer> lstructSize, LinkedList<String> larrays, TreeMap<Float, String> cmds) {
 		StringBuilder output = new StringBuilder();
 		if(isMain)
 			output.append("void main" + "(");
@@ -478,7 +506,7 @@ public class cscTranslator
 		
 		// Add Local Variables
 		output.append("// Local Variable Declarations\n");
-		output.append(getDeclarations(locals, lstruct, lstructSize, FP));
+		output.append(getDeclarations(locals, lstruct, lstructSize, larrays, FP));
 		
 		// Add Body Commands
 		output.append("// Function Body\n");
@@ -492,31 +520,6 @@ public class cscTranslator
 		}	
 		output.append("}\n");
 		return output.toString();
-	}
-	public static String getDeclarations(TreeMap<Integer, String> variables, HashMap<String, TreeMap<Integer,String>> structs, HashMap<String, Integer> structSize, int scope)
-	{
-		StringBuilder strdec = new StringBuilder();
-		Integer prev = scope;
-		
-		for(Integer offset : variables.descendingKeySet())
-		{			
-			int size = Math.abs((offset - prev) / 8);
-			if(structs.containsKey(variables.get(offset)))
-			{
-				strdec.append(getStructDeclaration(variables.get(offset), structs, structSize, size));
-			}
-			else if(size > 1) // Array
-			{
-				strdec.append("\tlong " + variables.get(offset) + "[" + size + "];");
-			}
-			else // Variable
-			{
-				strdec.append("\tlong " + variables.get(offset) + ";");
-			}
-			strdec.append("\n");
-			prev = offset;
-		}
-		return strdec.toString();
 	}
 	private static String getStructDeclaration(String structname, HashMap<String, TreeMap<Integer,String>> structs, HashMap<String, Integer> structSize, int size)
 	{
