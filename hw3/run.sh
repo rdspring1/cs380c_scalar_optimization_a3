@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 # A script that invokes your compiler.
-./compiler $@ <&0 >&1
+./compiler.jar $@ <&0 >&1
