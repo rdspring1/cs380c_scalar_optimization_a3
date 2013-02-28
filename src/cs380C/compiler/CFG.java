@@ -16,6 +16,7 @@ public class CFG
 		arrayCmdlist = input.toArray(new String[cmdlist.size()]);
 		edges.put(-1, new TreeSet<Integer>());
 		generateCFG();
+		cleanCFG();
 		edges.remove(-1);
 	}
 	public String toString()
@@ -66,7 +67,7 @@ public class CFG
 				
 				if(edges.get(getPrevBlock(currentFunction, getPrevBlock(currentFunction, numline))).size() == 0)
 				{
-						edges.get(getPrevBlock(currentFunction, getPrevBlock(currentFunction, numline))).add(getPrevBlock(currentFunction, numline));
+					edges.get(getPrevBlock(currentFunction, getPrevBlock(currentFunction, numline))).add(getPrevBlock(currentFunction, numline));
 				}
 				
 				nodes.get(currentFunction).add(numline + 1);
@@ -152,9 +153,12 @@ public class CFG
 			return -1;
 	}
 	public int getCurrentBlock(int function, int numline) {
-		SortedSet<Integer> nextSet = nodes.get(function).tailSet(numline);
-		if(nextSet.size() > 0)
-			return nextSet.first();
+		if(nodes.get(function).contains(numline))
+			return numline;
+		
+		SortedSet<Integer> prevSet = nodes.get(function).headSet(numline);
+		if(prevSet.size() > 0)
+			return prevSet.last();
 		else
 			return -1;
 	}
@@ -173,6 +177,28 @@ public class CFG
 			return nextSet.last();
 		else
 			return cmdlist.size();
+	}
+	public int getCurrentFunction(int numline)
+	{
+		if(functions.contains(numline))
+			return numline;
+		
+		SortedSet<Integer> prevSet = functions.headSet(numline);
+		if(prevSet.size() > 0)
+			return prevSet.last();
+		else
+			return -1;
+	}
+	public SortedSet<Integer> getNodes(int function)
+	{
+		return nodes.get(function);
+	}
+	public SortedSet<Integer> getEdges(int node)
+	{
+		return edges.get(node);
+	}
+	public Iterator<Integer> getIterator() {
+		return functions.iterator();
 	}
 	private int startCondition(int numline) 
 	{
@@ -215,15 +241,15 @@ public class CFG
 		
 		return Integer.valueOf(line.substring(1, line.length() - 1)) - 1;
 	}
-	public SortedSet<Integer> getNodes(int function)
-	{
-		return nodes.get(function);
-	}
-	public SortedSet<Integer> getEdges(int node)
-	{
-		return edges.get(node);
-	}
-	public Iterator<Integer> getIterator() {
-		return functions.iterator();
+	private void cleanCFG() {
+		for(int func : functions)
+		{
+			SortedSet<Integer> nodeSet = nodes.get(func).headSet(nodes.get(func).last());
+			for(int node : nodeSet)
+			{
+				if(edges.get(node).isEmpty())
+					edges.get(node).add(getNextBlock(func, node));
+			}
+		}
 	}
 }

@@ -1,7 +1,5 @@
 package cs380C.compiler;
 
-
-
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.Writer;

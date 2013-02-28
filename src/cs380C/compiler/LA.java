@@ -3,7 +3,7 @@ package cs380C.compiler;
 import java.util.*;
 
 public class LA {
-	private static List<String> DEFCMD = Arrays.asList("store", "move");
+	public static List<String> DEFCMD = Arrays.asList("store", "move");
 	
 	private LinkedList<String> cmdlist = new LinkedList<String>();
 	private CFG cfg;
@@ -83,7 +83,7 @@ public class LA {
 		}
 	}
 
-	private boolean acceptCmd(String cmd, Iterable<String> iter) {
+	public static boolean acceptCmd(String cmd, Iterable<String> iter) {
 		for(String i : iter)
 		{
 			if(cmd.equals(i))
@@ -92,8 +92,7 @@ public class LA {
 		return false;
 	}
 	
-	@SuppressWarnings("unused")
-	private boolean ignoreCmd(String cmd, Iterable<String> iter) {
+	public static boolean ignoreCmd(String cmd, Iterable<String> iter) {
 		for(String i : iter)
 		{
 			if(cmd.equals(i))
@@ -142,7 +141,7 @@ public class LA {
 		int endline = cfg.getNextBlock(function, block) - 1;
 		
 		if(endline < 0)
-			endline = cfg.getNextFunction(function) - 1;
+			endline = cfg.getNextFunction(function);
 		
 		instructLiveSet.put(endline, out.get(block));
 		
