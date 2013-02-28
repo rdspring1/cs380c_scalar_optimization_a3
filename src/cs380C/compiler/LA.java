@@ -54,7 +54,7 @@ public class LA {
 			Integer linenum = Integer.valueOf(numline);
 			String[] cmd = line.split(":")[1].trim().split("\\s");
 			
-			if(acceptCmd(cmd[0], DEFCMD))
+			if(LA.DEFCMD.contains(cmd[0]))
 			{
 				if(cmd[1].contains("#"))
 				{
@@ -82,25 +82,6 @@ public class LA {
 			++numline;
 		}
 	}
-
-	public static boolean acceptCmd(String cmd, Iterable<String> iter) {
-		for(String i : iter)
-		{
-			if(cmd.equals(i))
-				return true;
-		}
-		return false;
-	}
-	
-	public static boolean ignoreCmd(String cmd, Iterable<String> iter) {
-		for(String i : iter)
-		{
-			if(cmd.equals(i))
-				return false;
-		}
-		return true;
-	}
-
 	private boolean update() {
 		boolean update = false;
 		Iterator<Integer> funcIter = cfg.iterator();

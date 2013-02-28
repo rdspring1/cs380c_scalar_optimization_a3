@@ -4,9 +4,8 @@ import java.util.*;
 
 // Dead Code Elimination
 public class DCE implements Optimization {
-
+	private static List<String> REGDEF = Arrays.asList("add", "sub", "mul", "div", "mod", "neg", "cmpeq", "cmple", "cmplt", "load", "read");
 	private LinkedList<String> cmdlist;
-	
 	private static DCE instance;
 	private DCE() { }
 	
@@ -21,7 +20,29 @@ public class DCE implements Optimization {
 	public LinkedList<String> performOptimization(LinkedList<String> input) {
 		this.cmdlist = input;
 		while(update());
+		updateReferences();
 		return cmdlist;
+	}
+	private void updateReferences() {
+		SortedSet<Integer> def = new TreeSet<Integer>();
+		int linenum = 1;
+		for(String line : cmdlist)
+		{
+			String[] cmd = line.split(":")[1].trim().split("\\s");
+			
+			if(REGDEF.contains(cmd[0]))
+				def.add(linenum);
+			
+			for(int i = 1; i < cmd.length; ++i)
+			{
+				if(cmd[i].contains("(") && cmd[i].contains(")"))
+					def.remove(Integer.valueOf(cmd[i].substring(1, cmd[i].length() - 1)));
+			}
+			++linenum;
+		}
+	
+		for(int line : def)
+			updateCmdlist(line);
 	}
 	private boolean update() {
 		int numline = 1;
@@ -37,7 +58,6 @@ public class DCE implements Optimization {
 			
 			if(blocknum > 0 && checkRemove(cmd, analysis.get(blocknum)))
 			{
-				iter.remove();
 				updateCmdlist(numline);
 				return true;
 			}
@@ -53,7 +73,11 @@ public class DCE implements Optimization {
 		int numline = 1;
 		while(iter.hasNext())
 		{
-			iter.set(updateLine(iter.next(), numline, linechange));
+			String line = iter.next();
+			if(numline == linechange)
+				iter.remove();
+			else
+				iter.set(updateLine(line, numline, linechange));
 			++numline;
 		}
 	}
@@ -97,7 +121,7 @@ public class DCE implements Optimization {
 
 	private boolean checkRemove(String[] cmd, Set<String> set) {
 		// Determine if the command is live or dead
-		if(LA.acceptCmd(cmd[0], LA.DEFCMD))
+		if(LA.DEFCMD.contains(cmd[0]))
 		{		
 			if(cmd[2].contains("#") && !set.isEmpty())
 				return !set.contains(cmd[2].split("#")[0]);
