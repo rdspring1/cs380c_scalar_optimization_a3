@@ -25,8 +25,7 @@ public class compiler_ui {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) throws Exception {
-		try {			
+	public static void main(String[] args) throws Exception {		
 			// Parse CommandLine Arguments
 			final Scanner r = new Scanner(new File(args[0]));
 			//final Scanner r = new Scanner(System.in);
@@ -53,10 +52,6 @@ public class compiler_ui {
 				performOptimization(o);
 			
 			generateOutput(w, outputType);
-			
-		} catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
-		}
 	}
 
 	private static void generateOutput(Writer w, backend outputType) throws Exception {
